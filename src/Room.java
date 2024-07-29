@@ -67,6 +67,15 @@ public class Room {
         return availability[day - 1];
     }
 
+    public boolean isAvailable(int checkInDay, int checkOutDay) {
+        for (int i = checkInDay; i < checkOutDay; i++) {
+            if (!availability[i - 1]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public void book(int checkInDay, int checkOutDay) {
         for (int i = checkInDay; i < checkOutDay; i++) {
             availability[i - 1] = false;
