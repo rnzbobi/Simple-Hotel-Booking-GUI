@@ -1,4 +1,3 @@
-
 import java.util.*;
 
 public class Hotel {
@@ -55,7 +54,7 @@ public class Hotel {
     }
 
     public void removeRoom(String roomName) {
-        rooms.removeIf(room -> room.getName().equals(roomName) && room.isAvailable(1));
+        rooms.removeIf(room -> room.getName().equals(roomName) && room.isAvailable(1, 2));  // Check availability for first day as a placeholder
     }
 
     public void addReservation(Reservation reservation) {
