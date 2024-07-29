@@ -275,7 +275,7 @@ public class HotelReservationSystem {
             return;
         }
     
-        System.out.println("Select room type: (TYPE NUMBER)");
+        System.out.println("Select room type:");
         System.out.println("1. Standard");
         System.out.println("2. Deluxe");
         System.out.println("3. Executive");
@@ -305,12 +305,15 @@ public class HotelReservationSystem {
         // Change room type
         availableRoom.setType(selectedType);
     
-        Reservation reservation = new Reservation(guestName, checkInDate, checkOutDate, availableRoom);
+        System.out.print("Enter discount code (if any): ");
+        String discountCode = scanner.nextLine().trim();
+    
+        Reservation reservation = new Reservation(guestName, checkInDate, checkOutDate, availableRoom, discountCode);
         hotel.addReservation(reservation);
         System.out.println("Booking successful. Total price: " + formatPrice(reservation.getTotalPrice()));
         System.out.println("Room Assigned: " + availableRoom.getName() + " (" + availableRoom.getType() + ")");
-    }    
-    
+    }
+        
     private LocalDate parseDate(String date) {
         try {
             return LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE);
