@@ -1,21 +1,14 @@
 import java.util.*;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
-/**
- * The HotelReservationSystem class manages the hotel booking system.
- * It provides functionality to create hotels, view hotel details, manage hotels,
- * and simulate booking reservations.
- */
 public class HotelReservationSystem {
 
     private Map<String, Hotel> hotels = new HashMap<>();
     private Scanner scanner = new Scanner(System.in);
 
-    /**
-     * Starts the main loop of the hotel reservation system, offering various
-     * functionalities through a command-line interface.
-     */
     public void run() {
         boolean exit = false;
         while (!exit) {
@@ -26,8 +19,9 @@ public class HotelReservationSystem {
             System.out.println("4. Simulate Booking");
             System.out.println("5. Exit");
             System.out.print("Select an option: ");
-            int option = scanner.nextInt();
-            scanner.nextLine();
+            
+            int option = getIntInput();
+            
             switch (option) {
                 case 1:
                     createHotel();
@@ -50,10 +44,16 @@ public class HotelReservationSystem {
         }
     }
 
-    /**
-     * Creates a new hotel with a unique name and specifies the number of rooms.
-     * Ensures that the hotel name is unique and that the number of rooms is within allowed limits.
-     */
+    private int getIntInput() {
+        while (true) {
+            try {
+                return Integer.parseInt(scanner.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.print("Invalid input. Please enter a valid number: ");
+            }
+        }
+    }
+
     public void createHotel() {
         System.out.print("Enter hotel name: ");
         String name = scanner.nextLine();
@@ -62,20 +62,43 @@ public class HotelReservationSystem {
             return;
         }
         System.out.print("Enter number of rooms (1-50): ");
-        int roomCount = scanner.nextInt();
+        int roomCount = getIntInput();
         if (roomCount < 1 || roomCount > 50) {
             System.out.println("Invalid number of rooms.");
             return;
         }
-        hotels.put(name, new Hotel(name, roomCount));
-        System.out.println("Base price per night is set to 1299.0");
+    
+        Hotel hotel = new Hotel(name, roomCount, 1299.0);
+    
+        for (int i = 1; i <= roomCount; i++) {
+            String roomNumber = String.format("Room%02d", i);
+            hotel.addRoom(name + "_" + roomNumber, Room.RoomType.STANDARD);  // Default type
+        }
+    
+        hotels.put(name, hotel);
         System.out.println("Hotel created successfully.");
     }
+    
 
-    /**
-     * Displays details of a selected hotel including room availability, room details,
-     * and reservation details based on user input.
-     */
+    private Room.RoomType selectRoomType() {
+        System.out.println("Select room type:");
+        System.out.println("1. Standard");
+        System.out.println("2. Deluxe");
+        System.out.println("3. Executive");
+        int typeOption = getIntInput();
+        switch (typeOption) {
+            case 1:
+                return Room.RoomType.STANDARD;
+            case 2:
+                return Room.RoomType.DELUXE;
+            case 3:
+                return Room.RoomType.EXECUTIVE;
+            default:
+                System.out.println("Invalid option. Defaulting to Standard.");
+                return Room.RoomType.STANDARD;
+        }
+    }
+
     public void viewHotel() {
         Hotel hotel = selectHotel();
         if (hotel == null) return;
@@ -85,53 +108,73 @@ public class HotelReservationSystem {
         System.out.println("1. View room availability");
         System.out.println("2. View room details");
         System.out.println("3. View reservation details");
-        int option = scanner.nextInt();
-        scanner.nextLine();
+        
+        int option = getIntInput();
+        
         switch (option) {
             case 1:
-                System.out.print("Enter day (1-31): ");
-                int day = scanner.nextInt();
-                System.out.println("Available rooms: " + hotel.getAvailableRoomsCount(day));
-                System.out.println("Booked rooms: " + hotel.getBookedRoomsCount(day));
+                viewRoomAvailability(hotel);
                 break;
             case 2:
-                System.out.print("Enter room name: ");
-                String roomName = scanner.nextLine();
-                Room room = hotel.getRooms().stream().filter(r -> r.getName().equals(roomName)).findFirst().orElse(null);
-                if (room == null) {
-                    System.out.println("Room not found.");
-                    return;
-                }
-                System.out.println("Room: " + room.getName());
-                System.out.println("Price per night: " + formatPrice(room.getPricePerNight()));
-                System.out.println("Availability: ");
-                for (int i = 1; i <= 31; i++) {
-                    System.out.println("Day " + i + ": " + (room.isAvailable(i) ? "Available" : "Booked"));
-                }
+                viewRoomDetails(hotel);
                 break;
             case 3:
-                System.out.print("Enter guest name: ");
-                String guestName = scanner.nextLine();
-                Reservation reservation = hotel.getReservations().stream().filter(r -> r.getGuestName().equals(guestName)).findFirst().orElse(null);
-                if (reservation == null) {
-                    System.out.println("Reservation not found.");
-                    return;
-                }
-                System.out.println("Guest: " + reservation.getGuestName());
-                System.out.println("Check-in date: " + reservation.getCheckInDate());
-                System.out.println("Check-out date: " + reservation.getCheckOutDate());
-                System.out.println("Room: " + reservation.getRoom().getName());
-                System.out.println("Total price: " + formatPrice(reservation.getTotalPrice()));
+                viewReservationDetails(hotel);
                 break;
             default:
                 System.out.println("Invalid option.");
         }
     }
 
-    /**
-     * Allows the user to manage hotel details such as changing the hotel's name,
-     * adding or removing rooms, updating room prices, removing reservations, or deleting the hotel.
-     */
+    private void viewRoomAvailability(Hotel hotel) {
+        System.out.print("Enter day (1-31): ");
+        int day = getIntInput();
+        if (day < 1 || day > 31) {
+            System.out.println("Invalid day. Please enter a day between 1 and 31.");
+            return;
+        }
+        int availableRooms = hotel.getAvailableRoomsCount(day);
+        int bookedRooms = hotel.getRooms().size() - availableRooms;
+        System.out.println("Available rooms: " + availableRooms);
+        System.out.println("Booked rooms: " + bookedRooms);
+    }
+
+    private void viewRoomDetails(Hotel hotel) {
+        System.out.print("Enter room name: ");
+        String roomName = scanner.nextLine();
+        Room room = hotel.getRooms().stream().filter(r -> r.getName().equals(roomName)).findFirst().orElse(null);
+        if (room == null) {
+            System.out.println("Room not found.");
+            return;
+        }
+        System.out.print("Enter day (1-31): ");
+        int day = getIntInput();
+        if (day < 1 || day > 31) {
+            System.out.println("Invalid day. Please enter a day between 1 and 31.");
+            return;
+        }
+        System.out.println("Room: " + room.getName());
+        System.out.println("Type: " + room.getType());
+        System.out.println("Price per night: " + formatPrice(room.getPricePerNight()));
+        System.out.println("Availability on day " + day + ": " + (room.isAvailable(day) ? "Available" : "Booked"));
+    }
+
+    private void viewReservationDetails(Hotel hotel) {
+        System.out.print("Enter guest name: ");
+        String guestName = scanner.nextLine();
+        Reservation reservation = hotel.getReservations().stream().filter(r -> r.getGuestName().equals(guestName)).findFirst().orElse(null);
+        if (reservation == null) {
+            System.out.println("Reservation not found.");
+            return;
+        }
+        System.out.println("Guest: " + reservation.getGuestName());
+        System.out.println("Check-in date: " + reservation.getCheckInDate());
+        System.out.println("Check-out date: " + reservation.getCheckOutDate());
+        System.out.println("Room: " + reservation.getRoom().getName());
+        System.out.println("Type: " + reservation.getRoom().getType());
+        System.out.println("Total price: " + formatPrice(reservation.getTotalPrice()));
+    }
+
     public void manageHotel() {
         Hotel hotel = selectHotel();
         if (hotel == null) return;
@@ -141,8 +184,9 @@ public class HotelReservationSystem {
         System.out.println("4. Update base price for a room");
         System.out.println("5. Remove reservation");
         System.out.println("6. Remove hotel");
-        int option = scanner.nextInt();
-        scanner.nextLine();
+        
+        int option = getIntInput();
+        
         switch (option) {
             case 1:
                 System.out.print("Enter new hotel name: ");
@@ -157,21 +201,16 @@ public class HotelReservationSystem {
                 System.out.println("Hotel name updated successfully.");
                 break;
             case 2:
-                System.out.print("Enter number of rooms to add: ");
-                int roomsToAdd = scanner.nextInt();
-                if (hotel.getRooms().size() + roomsToAdd > 50) {
-                    System.out.println("Cannot exceed 50 rooms in total.");
-                    return;
-                }
-                for (int i = 1; i <= roomsToAdd; i++) {
-                    hotel.addRoom("Room " + (hotel.getRooms().size() + 1));
-                }
-                System.out.println("Rooms added successfully.");
+                System.out.print("Enter room name: ");
+                String roomName = scanner.nextLine();
+                Room.RoomType type = selectRoomType();
+                hotel.addRoom(roomName, type);
+                System.out.println("Room added successfully.");
                 break;
             case 3:
                 System.out.print("Enter room name to remove: ");
-                String roomName = scanner.nextLine();
-                hotel.removeRoom(roomName);
+                String roomNameToRemove = scanner.nextLine();
+                hotel.removeRoom(roomNameToRemove);
                 System.out.println("Room removed successfully.");
                 break;
             case 4:
@@ -180,7 +219,7 @@ public class HotelReservationSystem {
                     return;
                 }
                 System.out.print("Enter new base price: ");
-                double newBasePrice = scanner.nextDouble();
+                double newBasePrice = getIntInput();
                 if (newBasePrice < 100.0) {
                     System.out.println("Base price must be >= 100.0.");
                     return;
@@ -207,40 +246,80 @@ public class HotelReservationSystem {
                 System.out.println("Invalid option.");
         }
     }
+    
 
-    /**
-     * Simulates the booking of a room in a hotel. It allows the user to enter a guest name,
-     * select a hotel, and specify check-in and check-out dates. It checks room availability
-     * and processes the booking if a room is available.
-     */
     public void simulateBooking() {
         Hotel hotel = selectHotel();
         if (hotel == null) return;
         System.out.print("Enter guest name: ");
         String guestName = scanner.nextLine();
         
-        System.out.print("Enter check-in date (yyyy-mm-dd): ");
-        LocalDate checkInDate = LocalDate.parse(scanner.nextLine());
-        System.out.print("Enter check-out date (yyyy-mm-dd): ");
-
-        LocalDate checkOutDate = LocalDate.parse(scanner.nextLine());
-        Room availableRoom = hotel.getRooms().stream().filter(room -> room.isAvailable(checkInDate.getDayOfMonth())).findFirst().orElse(null);
+        LocalDate checkInDate = null;
+        LocalDate checkOutDate = null;
+        
+        while (checkInDate == null) {
+            System.out.print("Enter check-in date (yyyy-mm-dd): ");
+            checkInDate = parseDate(scanner.nextLine());
+        }
+        
+        while (checkOutDate == null) {
+            System.out.print("Enter check-out date (yyyy-mm-dd): ");
+            checkOutDate = parseDate(scanner.nextLine());
+        }
+        
+        int checkInDay = checkInDate.getDayOfMonth();
+        int checkOutDay = checkOutDate.getDayOfMonth();
+        
+        if (checkInDay == 31 || checkOutDay == 1) {
+            System.out.println("Invalid booking dates. Bookings cannot start on the 31st or end on the 1st.");
+            return;
+        }
+    
+        System.out.println("Select room type: (TYPE NUMBER)");
+        System.out.println("1. Standard");
+        System.out.println("2. Deluxe");
+        System.out.println("3. Executive");
+        int typeOption = getIntInput();
+        Room.RoomType selectedType;
+        switch (typeOption) {
+            case 1:
+                selectedType = Room.RoomType.STANDARD;
+                break;
+            case 2:
+                selectedType = Room.RoomType.DELUXE;
+                break;
+            case 3:
+                selectedType = Room.RoomType.EXECUTIVE;
+                break;
+            default:
+                System.out.println("Invalid option. Defaulting to Standard.");
+                selectedType = Room.RoomType.STANDARD;
+        }
+        
+        Room availableRoom = hotel.getRooms().stream().filter(room -> room.isAvailable(checkInDay)).findFirst().orElse(null);
         if (availableRoom == null) {
             System.out.println("No available rooms for the selected dates.");
             return;
         }
+    
+        // Change room type
+        availableRoom.setType(selectedType);
+    
         Reservation reservation = new Reservation(guestName, checkInDate, checkOutDate, availableRoom);
         hotel.addReservation(reservation);
         System.out.println("Booking successful. Total price: " + formatPrice(reservation.getTotalPrice()));
-        System.out.println("Room Assigned: " + availableRoom.getName()); 
-
+        System.out.println("Room Assigned: " + availableRoom.getName() + " (" + availableRoom.getType() + ")");
+    }    
+    
+    private LocalDate parseDate(String date) {
+        try {
+            return LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE);
+        } catch (DateTimeParseException e) {
+            System.out.println("Invalid date format. Please use yyyy-mm-dd.");
+            return null;
+        }
     }
 
-    /**
-     * Simulates the booking of a room in a hotel. It allows the user to enter a guest name,
-     * select a hotel, and specify check-in and check-out dates. It checks room availability
-     * and processes the booking if a room is available.
-     */
     public Hotel selectHotel() {
         if (hotels.isEmpty()) {
             System.out.println("No hotels available.");
@@ -257,12 +336,6 @@ public class HotelReservationSystem {
         return hotel;
     }
 
-    /**
-     * Formats a price to a string with two decimal places.
-     *
-     * @param price The price to format.
-     * @return A string representation of the price formatted to two decimal places.
-     */
     public String formatPrice(double price) {
         DecimalFormat df = new DecimalFormat("#.00");
         return df.format(price);
