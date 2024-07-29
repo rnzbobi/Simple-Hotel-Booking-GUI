@@ -13,12 +13,14 @@ public class Room {
     private double pricePerNight;
     private double basePrice; // Add basePrice to store the base price for the room
     private boolean[] availability;
+    private Map<Integer, Double> datePriceModifiers; // Date price modifiers
     
     public Room(String name, RoomType type, double basePrice) {
         this.name = name;
         this.type = type;
         this.basePrice = basePrice; // Initialize basePrice
         this.availability = new boolean[31];
+        this.datePriceModifiers = new HashMap<>(); // Initialize date price modifiers
         Arrays.fill(this.availability, true);
         setPricePerNight(basePrice); // Set the initial price based on the type
     }
@@ -48,6 +50,17 @@ public class Room {
                 this.pricePerNight = basePrice * 1.35;
                 break;
         }
+    }
+
+    public void setDatePriceModifier(int day, double modifier) {
+        if (day < 1 || day > 31 || modifier < 0.5 || modifier > 1.5) {
+            throw new IllegalArgumentException("Invalid day or modifier");
+        }
+        datePriceModifiers.put(day, modifier);
+    }
+
+    public double getDatePriceModifier(int day) {
+        return datePriceModifiers.getOrDefault(day, 1.0); // Default modifier is 1.0 (100%)
     }
 
     public boolean isAvailable(int day) {

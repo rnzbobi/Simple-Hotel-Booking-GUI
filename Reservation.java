@@ -22,7 +22,12 @@ public class Reservation {
 
     private double calculateTotalPrice() {
         long days = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
-        double basePrice = days * room.getPricePerNight();
+        double basePrice = 0.0;
+        for (long i = 0; i < days; i++) {
+            int day = checkInDate.plusDays(i).getDayOfMonth();
+            basePrice += room.getPricePerNight() * room.getDatePriceModifier(day);
+        }
+
         double discount = 0.0;
 
         switch (discountCode) {
@@ -31,7 +36,7 @@ public class Reservation {
                 break;
             case "STAY4_GET1":
                 if (days >= 5) {
-                    discount = room.getPricePerNight();
+                    discount = room.getPricePerNight() * room.getDatePriceModifier(checkInDate.getDayOfMonth());
                 }
                 break;
             case "PAYDAY":

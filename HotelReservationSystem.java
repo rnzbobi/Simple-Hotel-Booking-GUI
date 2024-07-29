@@ -67,36 +67,16 @@ public class HotelReservationSystem {
             System.out.println("Invalid number of rooms.");
             return;
         }
-    
+
         Hotel hotel = new Hotel(name, roomCount, 1299.0);
-    
+
         for (int i = 1; i <= roomCount; i++) {
             String roomNumber = String.format("Room%02d", i);
             hotel.addRoom(name + "_" + roomNumber, Room.RoomType.STANDARD);  // Default type
         }
-    
+
         hotels.put(name, hotel);
         System.out.println("Hotel created successfully.");
-    }
-    
-
-    private Room.RoomType selectRoomType() {
-        System.out.println("Select room type:");
-        System.out.println("1. Standard");
-        System.out.println("2. Deluxe");
-        System.out.println("3. Executive");
-        int typeOption = getIntInput();
-        switch (typeOption) {
-            case 1:
-                return Room.RoomType.STANDARD;
-            case 2:
-                return Room.RoomType.DELUXE;
-            case 3:
-                return Room.RoomType.EXECUTIVE;
-            default:
-                System.out.println("Invalid option. Defaulting to Standard.");
-                return Room.RoomType.STANDARD;
-        }
     }
 
     public void viewHotel() {
@@ -127,12 +107,13 @@ public class HotelReservationSystem {
     }
 
     private void viewRoomAvailability(Hotel hotel) {
-        System.out.print("Enter day (1-31): ");
-        int day = getIntInput();
-        if (day < 1 || day > 31) {
-            System.out.println("Invalid day. Please enter a day between 1 and 31.");
+        System.out.print("Enter date (yyyy-mm-dd): ");
+        LocalDate date = parseDate(scanner.nextLine());
+        if (date == null) {
+            System.out.println("Invalid date.");
             return;
         }
+        int day = date.getDayOfMonth();
         int availableRooms = hotel.getAvailableRoomsCount(day);
         int bookedRooms = hotel.getRooms().size() - availableRooms;
         System.out.println("Available rooms: " + availableRooms);
@@ -147,12 +128,13 @@ public class HotelReservationSystem {
             System.out.println("Room not found.");
             return;
         }
-        System.out.print("Enter day (1-31): ");
-        int day = getIntInput();
-        if (day < 1 || day > 31) {
-            System.out.println("Invalid day. Please enter a day between 1 and 31.");
+        System.out.print("Enter date (yyyy-mm-dd): ");
+        LocalDate date = parseDate(scanner.nextLine());
+        if (date == null) {
+            System.out.println("Invalid date.");
             return;
         }
+        int day = date.getDayOfMonth();
         System.out.println("Room: " + room.getName());
         System.out.println("Type: " + room.getType());
         System.out.println("Price per night: " + formatPrice(room.getPricePerNight()));
@@ -182,8 +164,9 @@ public class HotelReservationSystem {
         System.out.println("2. Add room(s)");
         System.out.println("3. Remove room(s)");
         System.out.println("4. Update base price for a room");
-        System.out.println("5. Remove reservation");
-        System.out.println("6. Remove hotel");
+        System.out.println("5. Set date price modifier");
+        System.out.println("6. Remove reservation");
+        System.out.println("7. Remove hotel");
         
         int option = getIntInput();
         
@@ -228,6 +211,9 @@ public class HotelReservationSystem {
                 System.out.println("Base price updated successfully.");
                 break;
             case 5:
+                setDatePriceModifier(hotel);
+                break;
+            case 6:
                 System.out.print("Enter guest name to remove reservation: ");
                 String guestName = scanner.nextLine();
                 Reservation reservation = hotel.getReservations().stream().filter(r -> r.getGuestName().equals(guestName)).findFirst().orElse(null);
@@ -238,7 +224,7 @@ public class HotelReservationSystem {
                 hotel.removeReservation(reservation);
                 System.out.println("Reservation removed successfully.");
                 break;
-            case 6:
+            case 7:
                 hotels.remove(hotel.getName());
                 System.out.println("Hotel removed successfully.");
                 break;
@@ -246,7 +232,59 @@ public class HotelReservationSystem {
                 System.out.println("Invalid option.");
         }
     }
+
+    private Room.RoomType selectRoomType() {
+        System.out.println("Select room type:");
+        System.out.println("1. Standard");
+        System.out.println("2. Deluxe");
+        System.out.println("3. Executive");
+        int typeOption = getIntInput();
+        switch (typeOption) {
+            case 1:
+                return Room.RoomType.STANDARD;
+            case 2:
+                return Room.RoomType.DELUXE;
+            case 3:
+                return Room.RoomType.EXECUTIVE;
+            default:
+                System.out.println("Invalid option. Defaulting to Standard.");
+                return Room.RoomType.STANDARD;
+        }
+    }    
+
+    private void setDatePriceModifier(Hotel hotel) {
+        System.out.print("Enter room name: ");
+        String roomName = scanner.nextLine();
+        Room room = hotel.getRooms().stream().filter(r -> r.getName().equals(roomName)).findFirst().orElse(null);
+        if (room == null) {
+            System.out.println("Room not found.");
+            return;
+        }
+        System.out.print("Enter start date (yyyy-mm-dd): ");
+        LocalDate startDate = parseDate(scanner.nextLine());
+        if (startDate == null) {
+            System.out.println("Invalid date.");
+            return;
+        }
+        System.out.print("Enter end date (yyyy-mm-dd): ");
+        LocalDate endDate = parseDate(scanner.nextLine());
+        if (endDate == null) {
+            System.out.println("Invalid date.");
+            return;
+        }
+        System.out.print("Enter price modifier (0.5 [50%] to 1.5 [150%]): ");
+        double modifier = scanner.nextDouble();
+        scanner.nextLine(); // Consume the newline character
     
+        try {
+            for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+                room.setDatePriceModifier(date.getDayOfMonth(), modifier);
+            }
+            System.out.println("Date price modifier set successfully.");
+        } catch (IllegalArgumentException e) {
+            System.out.println("Error setting date price modifier: " + e.getMessage());
+        }
+    }    
 
     public void simulateBooking() {
         Hotel hotel = selectHotel();
@@ -274,7 +312,7 @@ public class HotelReservationSystem {
             System.out.println("Invalid booking dates. Bookings cannot start on the 31st or end on the 1st.");
             return;
         }
-    
+
         System.out.println("Select room type:");
         System.out.println("1. Standard");
         System.out.println("2. Deluxe");
@@ -301,19 +339,19 @@ public class HotelReservationSystem {
             System.out.println("No available rooms for the selected dates.");
             return;
         }
-    
+
         // Change room type
         availableRoom.setType(selectedType);
-    
+
         System.out.print("Enter discount code (if any): ");
         String discountCode = scanner.nextLine().trim();
-    
+
         Reservation reservation = new Reservation(guestName, checkInDate, checkOutDate, availableRoom, discountCode);
         hotel.addReservation(reservation);
         System.out.println("Booking successful. Total price: " + formatPrice(reservation.getTotalPrice()));
         System.out.println("Room Assigned: " + availableRoom.getName() + " (" + availableRoom.getType() + ")");
     }
-        
+    
     private LocalDate parseDate(String date) {
         try {
             return LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE);
