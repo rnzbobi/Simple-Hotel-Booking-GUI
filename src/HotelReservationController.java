@@ -2,12 +2,14 @@ import javax.swing.JOptionPane;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class HotelReservationController {
     private Hotel hotel;
-    private HotelReservationView view;
+    private HotelReservationSystemGUI view;
 
-    public HotelReservationController(Hotel hotel, HotelReservationView view) {
+    public HotelReservationController(Hotel hotel, HotelReservationSystemGUI view) {
         this.hotel = hotel;
         this.view = view;
 
@@ -18,20 +20,32 @@ public class HotelReservationController {
             public void actionPerformed(ActionEvent e) {
                 String guestName = view.getGuestName();
                 String roomName = view.getSelectedRoomName();
-                reserveRoom(roomName, guestName);
+                String checkInDateStr = view.getCheckInDate();
+                String checkOutDateStr = view.getCheckOutDate();
+                String discountCode = view.getDiscountCode();
+
+                LocalDate checkInDate;
+                LocalDate checkOutDate;
+
+                try {
+                    checkInDate = LocalDate.parse(checkInDateStr, DateTimeFormatter.ISO_LOCAL_DATE);
+                    checkOutDate = LocalDate.parse(checkOutDateStr, DateTimeFormatter.ISO_LOCAL_DATE);
+                } catch (DateTimeParseException ex) {
+                    JOptionPane.showMessageDialog(null, "Invalid date format. Please use yyyy-mm-dd.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                reserveRoom(roomName, guestName, checkInDate, checkOutDate, discountCode);
             }
         });
     }
 
-    public void reserveRoom(String roomName, String guestName) {
+    public void reserveRoom(String roomName, String guestName, LocalDate checkInDate, LocalDate checkOutDate, String discountCode) {
         for (Room room : hotel.getRooms()) {
-            if (room.getName().equals(roomName) && room.isAvailable(1)) {
-                // Assume check-in and check-out dates for simplicity
-                LocalDate checkInDate = LocalDate.now();
-                LocalDate checkOutDate = checkInDate.plusDays(1);
-                Reservation reservation = new Reservation(guestName, checkInDate, checkOutDate, room, "");
+            if (room.getName().equals(roomName) && room.isAvailable(checkInDate.getDayOfMonth())) {
+                Reservation reservation = new Reservation(guestName, checkInDate, checkOutDate, room, discountCode);
                 hotel.addReservation(reservation);
-                JOptionPane.showMessageDialog(null, "Room " + roomName + " reserved for " + guestName);
+                JOptionPane.showMessageDialog(null, "Room " + roomName + " reserved for " + guestName + ". Total price: " + reservation.getTotalPrice());
                 return;
             }
         }
