@@ -154,7 +154,7 @@ public class HotelReservationController {
             sb.append("Type: ").append(room.getType()).append("\n");
             sb.append("Price per night: ").append(room.getPricePerNight()).append("\n");
             sb.append("Availability:\n");
-            for (int day = 1; day <= 30; day++) {
+            for (int day = 1; day <= 31; day++) {  // Ensure we check all 31 days
                 sb.append(day).append(": ").append(room.isAvailable(day) ? "Available" : "Booked").append("\n");
             }
             view.setOutputText(sb.toString());
@@ -363,14 +363,14 @@ public class HotelReservationController {
                 view.setOutputText("Action Canceled");
                 return;
             }
-            LocalDate checkInDate = LocalDate.parse(JOptionPane.showInputDialog("Enter check-in date (yyyy-mm-dd):"));
-            if (checkInDate == null) {
-                view.setOutputText("Action Canceled");
+            LocalDate checkInDate = parseDate(JOptionPane.showInputDialog("Enter check-in date (yyyy-mm-dd):"));
+            if (checkInDate == null || checkInDate.getDayOfMonth() == 31) {
+                view.setOutputText("Invalid check-in date. Reservations cannot start on the 31st.");
                 return;
             }
-            LocalDate checkOutDate = LocalDate.parse(JOptionPane.showInputDialog("Enter check-out date (yyyy-mm-dd):"));
-            if (checkOutDate == null) {
-                view.setOutputText("Action Canceled");
+            LocalDate checkOutDate = parseDate(JOptionPane.showInputDialog("Enter check-out date (yyyy-mm-dd):"));
+            if (checkOutDate == null || checkOutDate.getDayOfMonth() == 1) {
+                view.setOutputText("Invalid check-out date. Reservations cannot end on the 1st.");
                 return;
             }
 
@@ -399,6 +399,14 @@ public class HotelReservationController {
             Reservation reservation = new Reservation(guestName, checkInDate, checkOutDate, availableRoom, discountCode);
             hotel.addReservation(reservation);
             view.setOutputText("Booking successful. Total price: " + reservation.getTotalPrice() + "\nRoom Assigned: " + availableRoom.getName() + " (" + availableRoom.getType() + ")");
+        }
+
+        private LocalDate parseDate(String date) {
+            try {
+                return LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE);
+            } catch (DateTimeParseException e) {
+                return null;
+            }
         }
     }
 
