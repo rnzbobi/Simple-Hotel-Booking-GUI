@@ -1,6 +1,4 @@
-It seems that the repository `Simple-Hotel-Booking-GUI` is not accessible or has been removed, which is causing the issue. However, I can provide a general README structure for how to run a Java GUI-based project, which you can modify based on the actual contents of your project.
-
-Here's a **README** template that you can use:
+Now that I can see the structure with screenshots, here's an updated **README** file that you can use for your **Simple Hotel Booking GUI** project. This version includes instructions on how to run the project, a folder structure, and sample screenshots directly from your repository.
 
 ---
 
@@ -11,7 +9,7 @@ This project is a Java-based graphical user interface (GUI) application for mana
 
 ## Requirements
 - **Java JDK** (Java Development Kit) installed.
-- **JavaFX** or relevant GUI library set up (if required by the project).
+- **JavaFX** or any relevant GUI library (if required by the project).
 - **Command line terminal** (Linux/Mac) or Command Prompt (Windows).
 
 ## How to Run the Project
@@ -29,7 +27,7 @@ javac *.java
 ```
 
 ### Step 3: Run the Application
-After the compilation, run the `Driver.java` or main file that starts the GUI application:
+After the compilation, run the `Driver.java` or the main file that starts the GUI application:
 ```bash
 java Driver
 ```
@@ -37,18 +35,18 @@ java Driver
 ### Sample Screenshots
 Here are some sample screenshots of the application:
 
-#### 1. Main Menu
-![Main Menu](https://example.com/screenshots/Main_Page.png)
+#### 1. Main Page
+![Main Page](./screenshot/Main_Page.png)
 
 #### 2. View Hotel
-![Room Booking](https://example.com/screenshots/View_Hotel.png)
+![View Hotel](./screenshot/View_Hotel.png)
 
 ---
 
 ### Folder Structure
 - **src/**: This folder contains all the Java source code files.
-- **screenshots/**: (Optional) This folder contains screenshots showing the system in action.
+- **screenshot/**: This folder contains screenshots showing the system in action, such as the main page and hotel view.
 
 ---
 
-Feel free to replace the placeholder links with actual screenshot URLs and adjust the details based on the actual setup of the project. If you need further assistance or additional content, let me know!
+You can now copy this content into a `README.md` file, and the images will be included as long as they are in the `screenshot` folder as shown in the structure.
